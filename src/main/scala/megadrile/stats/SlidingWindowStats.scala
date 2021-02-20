@@ -1,11 +1,12 @@
 package megadrile.stats
 
 import megadrile.genomics.Variant
-import megadrile.stats.SlidingWindowStats.{Consumer, VariantResult, VariantWithStats}
+import megadrile.stats.SlidingWindowStats.{Consumer, ProcessReporter, VariantResult, VariantWithStats}
 
 import scala.collection.mutable
 
-final class SlidingWindowStats(windowSize: Int, consumer: Consumer) {
+final class SlidingWindowStats(windowSize: Int, consumer: Consumer,
+                               reporter: ProcessReporter = new ProcessReporter.Simple) {
 
   private val deque = new mutable.ArrayDeque[VariantWithStats]()
 
@@ -23,11 +24,11 @@ final class SlidingWindowStats(windowSize: Int, consumer: Consumer) {
       flushEarliest()
     }
     nVariants += 1L
+    reporter.nowAtVariant(variant, nVariants)
   }
 
   private def flushEarliest(): Unit = {
     val earliest = deque.removeHead()
-    val ldsBuilder = Seq.newBuilder[Double]
     consumer.nextVariant(earliest.variant)
     consumer.setMean(earliest.variantStats.mean)
     for (other <- deque) {
@@ -79,6 +80,24 @@ object SlidingWindowStats {
       override def doneWithVariant(): Unit = ()
     }
 
+  }
+
+  trait ProcessReporter {
+    def nowAtVariant(variant: Variant, nVariants: Long): Unit
+  }
+
+  object ProcessReporter {
+    final class Simple extends ProcessReporter {
+      val timeInterval: Long = 14000
+      var timeAtLastReport: Long = 0
+      override def nowAtVariant(variant: Variant, nVariants: Long): Unit = {
+        val timeNow = System.currentTimeMillis()
+        if(timeNow - timeAtLastReport > timeInterval) {
+          println(s"Now at variant $variant, processed $nVariants variants.")
+          timeAtLastReport = timeNow
+        }
+      }
+    }
   }
 
   final case class VariantWithStats(variant: Variant, variantStats: VariantStats)

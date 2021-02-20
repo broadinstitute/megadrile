@@ -20,7 +20,7 @@ object Megadrile {
     val windowSize = 1000000
     val slidingWindowStats =
       new SlidingWindowStats(windowSize, SlidingWindowStats.Consumer.NoOpConsumer)
-    for(variantContext <- vcfReader.iterator().asScala.take(5000)) {
+    for(variantContext <- vcfReader.iterator().asScala) {
       val chrom = variantContext.getContig
       val pos = variantContext.getStart
       val refAllele = variantContext.getReference
