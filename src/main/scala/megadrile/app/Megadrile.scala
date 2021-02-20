@@ -2,7 +2,10 @@ package megadrile.app
 
 import better.files.File
 import htsjdk.variant.vcf.VCFFileReader
-import scala.jdk.CollectionConverters.{ IteratorHasAsScala, ListHasAsScala}
+import megadrile.genomics.Variant
+import megadrile.stats.{SlidingWindowStats, VariantStats}
+
+import scala.jdk.CollectionConverters.{IteratorHasAsScala, ListHasAsScala}
 
 object Megadrile {
   def main(args: Array[String]): Unit = {
@@ -14,7 +17,10 @@ object Megadrile {
     val nSamples = vcfHeader.getNGenotypeSamples
     println("Number of genotype samples: " + nSamples)
     println("Now reading genotypes")
-    for(variantContext <- vcfReader.iterator().asScala.take(20)) {
+    val windowSize = 1000000
+    val slidingWindowStats =
+      new SlidingWindowStats(windowSize, SlidingWindowStats.Consumer.NoOpConsumer)
+    for(variantContext <- vcfReader.iterator().asScala.take(5000)) {
       val chrom = variantContext.getContig
       val pos = variantContext.getStart
       val refAllele = variantContext.getReference
@@ -22,13 +28,12 @@ object Megadrile {
       val altAlleles = variantContext.getAlternateAlleles.asScala
       for(altAllele <- altAlleles) {
         val alt = altAllele.getBaseString
-        println(s"$chrom:$pos:$ref:$alt\t${refAllele.isSymbolic}\t${altAllele.isSymbolic}")
-        val genotypeContext = variantContext.getGenotypes
-        for(genotype <- genotypeContext.iterator().asScala) {
-          val dose = genotype.countAllele(altAllele)
-        }
+        val variant = Variant(chrom, pos, ref, alt)
+        val variantStats = VariantStats.create(variantContext, altAllele, nSamples)
+        slidingWindowStats.addVariantStats(variant, variantStats)
       }
     }
-    println("Done!")
+    slidingWindowStats.flushAll()
+    println("Done! Read " + slidingWindowStats.nVariants + " variants.")
   }
 }

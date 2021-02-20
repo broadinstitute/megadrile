@@ -26,7 +26,7 @@ final class VariantStats(
 
   def covariance(thatVariantStats: VariantStats): Double = {
     var productSum: Double = 0.0
-    for (iSample <- 0 to nSamples) {
+    for (iSample <- 0 until nSamples) {
       productSum += dosageStore.getDosage(iSample) * thatVariantStats.dosageStore.getDosage(iSample)
     }
     val productMean = productSum / nSamples
