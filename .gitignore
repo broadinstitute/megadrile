@@ -1,6 +1,2 @@
-*.class
-*.log
+/target
 .idea
-target/
-project/build.properties
-project/target
