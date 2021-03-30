@@ -1,31 +1,12 @@
-mod config;
-
 extern crate clap;
 use std::fs::File;
-use vcf::{VCFReader, VCFError, VCFRecord};
+use vcf::{VCFReader, VCFRecord};
 use std::io::{BufReader};
-use std::io;
 use flate2::read::MultiGzDecoder;
-use std::convert;
+use megadrile::{error, config};
 
-enum Snag {
-    IoSnag(io::Error),
-    VCFSnag(VCFError)
-}
-
-impl convert::From<vcf::VCFError> for Snag {
-    fn from(error: VCFError) -> Snag {
-        Snag::VCFSnag(error)
-    }
-}
-
-impl convert::From<io::Error> for Snag {
-    fn from(error: io::Error) -> Snag {
-        Snag::IoSnag(error)
-    }
-}
-
-fn get_vcf_reader(input: &str) -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, Snag> {
+fn get_vcf_reader(input: &str)
+    -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
     Ok(VCFReader::new(BufReader::new(MultiGzDecoder::new(File::open(input)?)))?)
 }
 
@@ -59,7 +40,7 @@ fn main() {
                     }
                     println!("Number of records: {}", n_records);
                 }
-                Err(_snag) => {
+                Err(_error) => {
                     println!("Something went wrong!")
                 }
             }
