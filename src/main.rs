@@ -5,6 +5,7 @@ use vcf::{VCFReader, VCFRecord};
 use std::io::{BufReader};
 use flate2::read::MultiGzDecoder;
 use megadrile::{error, config, VcfRecordInspector};
+use std::io;
 
 fn get_vcf_reader(input: &str)
                   -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
@@ -41,6 +42,19 @@ impl VcfRecordInspector<u32> for RecordCounter {
     }
 }
 
+fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
+(reader: &mut VCFReader<B>, inspector: &mut I) -> Result<R, error::Error> {
+    let mut record = reader.empty_record();
+    loop {
+        let has_record = reader.next_record(&mut record)?;
+        if has_record {
+            inspector.inspect_record(&record);
+        } else {
+            break Ok(inspector.get_result());
+        }
+    }
+}
+
 fn main() {
     let cli_config = config::get_cli_config();
     match cli_config.value_of("input") {
@@ -52,24 +66,15 @@ fn main() {
                     let header = vcf_reader.header();
                     let n_samples = header.samples().len();
                     println!("Number of samples: {}", n_samples);
-                    let mut record: VCFRecord = vcf_reader.empty_record();
                     let mut record_counter = RecordCounter::new();
-                    loop {
-                        match vcf_reader.next_record(&mut record) {
-                            Ok(got_record) => {
-                                if got_record {
-                                    record_counter.inspect_record(&record);
-                                } else {
-                                    break;
-                                }
-                            }
-                            Err(_) => {
-                                println!("Something went wrong while reading record.");
-                                break;
-                            }
+                    match apply_record_inspector(&mut vcf_reader, &mut record_counter) {
+                        Ok(n_records) => {
+                            println!("Number of records: {}", n_records)
+                        }
+                        Err(_) => {
+                            println!("Something went wrong while reading records.");
                         }
                     }
-                    println!("Number of records: {}", record_counter.get_result());
                 }
                 Err(_error) => {
                     println!("Something went wrong!")
