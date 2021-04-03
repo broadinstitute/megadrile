@@ -1,36 +1,39 @@
 extern crate clap;
 
-use megadrile::config;
+use std::string;
+use megadrile::{config, error};
 use megadrile::read::{self, RecordCounter};
 
-fn main() {
+struct Stats {
+    n_samples: u32,
+    n_records: u32
+}
+
+fn count_samples_and_records(input: &str) -> Result<Stats, error::Error> {
+    let mut vcf_reader = read::get_vcf_reader(input)?;
+    let n_samples = vcf_reader.header().samples().len() as u32;
+    let mut record_counter = RecordCounter::new();
+    let n_records =
+        read::apply_record_inspector(&mut vcf_reader, &mut record_counter)?;
+    Ok(Stats { n_samples, n_records })
+}
+
+fn try_get_stats() -> Result<Stats, error::Error> {
     let cli_config = config::get_cli_config();
-    match cli_config.value_of("input") {
-        Some(input) => {
-            println!("Input: {}", input);
-            let vcf_reader = read::get_vcf_reader(input);
-            match vcf_reader {
-                Ok(mut vcf_reader) => {
-                    let header = vcf_reader.header();
-                    let n_samples = header.samples().len();
-                    println!("Number of samples: {}", n_samples);
-                    let mut record_counter = RecordCounter::new();
-                    match read::apply_record_inspector(&mut vcf_reader, &mut record_counter) {
-                        Ok(n_records) => {
-                            println!("Number of records: {}", n_records)
-                        }
-                        Err(_) => {
-                            println!("Something went wrong while reading records.");
-                        }
-                    }
-                }
-                Err(_error) => {
-                    println!("Something went wrong!")
-                }
-            }
+    let input = cli_config.value_of("input")
+        .ok_or(error::Error::MDError(string::String::from("No input given.")))?;
+    count_samples_and_records(input)
+}
+
+fn main() {
+    match try_get_stats() {
+        Ok(stats) => {
+            println!("Number of samples: {}.", stats.n_samples);
+            println!("Number of records: {}.", stats.n_records);
         }
-        None =>
-            println!("No input specified.")
+        Err(_) => {
+            println!("Error!")
+        }
     }
     println!("Done!");
 }

@@ -1,7 +1,8 @@
-use std::{io, convert};
+use std::{io, convert, string};
 use vcf::VCFError;
 
 pub enum Error {
+    MDError(string::String),
     Io(io::Error),
     Vcf(VCFError)
 }
