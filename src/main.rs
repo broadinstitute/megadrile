@@ -1,35 +1,34 @@
 extern crate clap;
 
-use std::string;
-use megadrile::{config, error};
-use megadrile::read::{self, RecordCounter};
+use megadrile::{stats, error};
+use megadrile::config;
 
-struct Stats {
-    n_samples: u32,
-    n_records: u32
-}
-
-fn count_samples_and_records(input: &str) -> Result<Stats, error::Error> {
-    let mut vcf_reader = read::get_vcf_reader(input)?;
-    let n_samples = vcf_reader.header().samples().len() as u32;
-    let mut record_counter = RecordCounter::new();
-    let n_records =
-        read::apply_record_inspector(&mut vcf_reader, &mut record_counter)?;
-    Ok(Stats { n_samples, n_records })
-}
-
-fn try_get_stats() -> Result<Stats, error::Error> {
-    let cli_config = config::get_cli_config();
-    let input = cli_config.value_of("input")
-        .ok_or(error::Error::MDError(string::String::from("No input given.")))?;
-    count_samples_and_records(input)
+fn evaluate_args() -> Result<(), error::Error> {
+    let arg_matches = config::get_cli_config();
+    if let (sub_name, Some(sub_matches)) = arg_matches.subcommand() {
+        match sub_name {
+            config::SUB_COMMAND_NAME_COUNTS => {
+                let counts = stats::try_get_counts(sub_matches)?;
+                println!("Number of samples: {}.", counts.n_samples);
+                println!("Number of records: {}.", counts.n_records);
+                Ok(())
+            }
+            config::SUB_COMMAND_NAME_LIST_VARIANTS => {
+                Err(error::Error::from("Listing variants - not yet implemented."))
+            }
+            &_ => {
+                Err(error::Error::from(format!("Unknown subcommand {}.", sub_name)))
+            }
+        }
+    } else {
+        Err(error::Error::from("Missing subcommand."))
+    }
 }
 
 fn main() {
-    match try_get_stats() {
-        Ok(stats) => {
-            println!("Number of samples: {}.", stats.n_samples);
-            println!("Number of records: {}.", stats.n_records);
+    match evaluate_args() {
+        Ok(_) => {
+            println!("ok")
         }
         Err(_) => {
             println!("Error!")
