@@ -30,8 +30,8 @@ fn main() {
         Ok(_) => {
             println!("ok")
         }
-        Err(_) => {
-            println!("Error!")
+        Err(error) => {
+            println!("Error: {}", error.message())
         }
     }
     println!("Done!");

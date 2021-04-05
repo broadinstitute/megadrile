@@ -27,3 +27,12 @@ impl convert::From<string::String> for Error {
     fn from(message: string::String) -> Error { Error::MDError(message) }
 }
 
+impl Error {
+    pub fn message(&self) -> String {
+        match self {
+            Error::MDError(string) => { string.to_string() }
+            Error::Io(io_error) => { format!("{:?}", io_error) }
+            Error::Vcf(vcf_error) => { vcf_error.to_string() }
+        }
+    }
+}
