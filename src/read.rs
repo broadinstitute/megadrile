@@ -1,14 +1,13 @@
 use vcf::{VCFRecord, VCFReader};
 use crate::error;
 use flate2::read::MultiGzDecoder;
-use std::io::BufReader;
+use std::io::{BufReader, Write};
 use std::io;
 use std::fs::File;
 
 pub trait VcfRecordInspector<R> {
-    fn reset(&mut self) -> ();
-    fn inspect_record(&mut self, record: &VCFRecord) -> ();
-    fn get_result(&self) -> R;
+    fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error>;
+    fn get_result(&mut self) -> Result<R, error::Error>;
 }
 
 pub fn get_vcf_reader(input: &str)
@@ -33,16 +32,13 @@ impl RecordCounter {
 }
 
 impl VcfRecordInspector<u32> for RecordCounter {
-    fn reset(&mut self) -> () {
-        self.n_records = 0;
-    }
-
-    fn inspect_record(&mut self, _record: &VCFRecord) -> () {
+    fn inspect_record(&mut self, _record: &VCFRecord) -> Result<(), error::Error> {
         self.n_records += 1;
+        Ok(())
     }
 
-    fn get_result(&self) -> u32 {
-        self.n_records
+    fn get_result(&mut self) -> Result<u32, error::Error> {
+        Ok(self.n_records)
     }
 }
 
@@ -52,10 +48,34 @@ pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
     loop {
         let has_record = reader.next_record(&mut record)?;
         if has_record {
-            inspector.inspect_record(&record);
+            inspector.inspect_record(&record)?;
         } else {
-            break Ok(inspector.get_result());
+            break inspector.get_result();
         }
     }
 }
 
+struct VariantListWriter<W: Write> {
+    write: W
+}
+
+impl<W: Write> VariantListWriter<W> {
+    pub fn new(write: W) -> VariantListWriter<W> {
+        VariantListWriter { write }
+    }
+}
+
+impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
+    fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error> {
+        for id in record.id.iter() {
+            let id_bytes: &[u8] = id;
+            self.write.write(id_bytes)?;
+        }
+        Ok(())
+    }
+
+    fn get_result(&mut self) -> Result<(), error::Error> {
+        self.write.flush()?;
+        Ok(())
+    }
+}
