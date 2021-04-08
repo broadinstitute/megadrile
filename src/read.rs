@@ -55,7 +55,7 @@ pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
     }
 }
 
-struct VariantListWriter<W: Write> {
+pub(crate) struct VariantListWriter<W: Write> {
     write: W
 }
 
@@ -70,6 +70,7 @@ impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
         for id in record.id.iter() {
             let id_bytes: &[u8] = id;
             self.write.write(id_bytes)?;
+            self.write.write("\n".as_bytes())?;
         }
         Ok(())
     }

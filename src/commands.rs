@@ -1,5 +1,5 @@
 use clap::ArgMatches;
-use crate::error;
+use crate::{error, transform};
 use crate::stats;
 
 fn get_str<'a>(arg_matches: &'a ArgMatches, name: &str) -> Result<&'a str, error::Error> {
@@ -18,6 +18,6 @@ pub fn print_counts(sub_matches: &ArgMatches) -> Result<(), error::Error> {
 pub fn write_list_of_variants(sub_matches: &ArgMatches) -> Result<(), error::Error> {
     let input = get_str(sub_matches, "input")?;
     let output = get_str(sub_matches, "output")?;
-    println!("Once implemented, this would read from {} and write to {}", input, output);
-    Err(error::Error::from("Listing variants - not yet implemented."))
+    println!("Reading from {} and writing to {}", input, output);
+    transform::write_variant_list_file(input, output)
 }

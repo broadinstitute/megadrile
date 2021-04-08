@@ -12,12 +12,13 @@ fn evaluate_args() -> Result<(), error::Error> {
             config::SUB_COMMAND_NAME_LIST_VARIANTS =>
                 commands::write_list_of_variants(sub_matches),
             &_ => {
-                let message = format!("Unknown subcommand {}.", sub_name);
+                let message =
+                    format!("Unknown subcommand {}. Use '--help' to get list.", sub_name);
                 Err(error::Error::from(message))
             }
         }
     } else {
-        Err(error::Error::from("Missing subcommand."))
+        Err(error::Error::from("Missing subcommand. Use '--help' to get list."))
     }
 }
 
