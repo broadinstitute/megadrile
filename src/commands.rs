@@ -18,6 +18,14 @@ pub fn print_counts(sub_matches: &ArgMatches) -> Result<(), error::Error> {
 pub fn write_list_of_variants(sub_matches: &ArgMatches) -> Result<(), error::Error> {
     let input = get_str(sub_matches, "input")?;
     let output = get_str(sub_matches, "output")?;
-    println!("Reading from {} and writing to {}", input, output);
+    println!("Reading from {} and writing variants to {}", input, output);
     transform::write_variant_list_file(input, output)
 }
+
+pub fn write_list_of_samples(sub_matches: &ArgMatches) -> Result<(), error::Error> {
+    let input = get_str(sub_matches, "input")?;
+    let output = get_str(sub_matches, "output")?;
+    println!("Reading from {} and writing samples to {}", input, output);
+    transform::write_sample_list_file(input, output)
+}
+

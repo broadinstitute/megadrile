@@ -2,6 +2,7 @@ use clap::{ArgMatches, App, Arg, SubCommand};
 
 pub const SUB_COMMAND_NAME_COUNTS: &str = "counts";
 pub const SUB_COMMAND_NAME_LIST_VARIANTS: &str = "list_variants";
+pub const SUB_COMMAND_NAME_LIST_SAMPLES: &str = "list_samples";
 
 pub const ARG_NAME_INPUT: &str = "input";
 pub const ARG_NAME_OUTPUT: &str = "output";
@@ -37,6 +38,12 @@ pub fn get_cli_config<'a>() -> ArgMatches<'a> {
         .subcommand(
             SubCommand::with_name(SUB_COMMAND_NAME_LIST_VARIANTS)
                 .about("Create a list of variants.")
+                .arg(create_input_arg())
+                .arg(create_output_arg())
+        )
+        .subcommand(
+            SubCommand::with_name(SUB_COMMAND_NAME_LIST_SAMPLES)
+                .about("Create a list of samples.")
                 .arg(create_input_arg())
                 .arg(create_output_arg())
         )
