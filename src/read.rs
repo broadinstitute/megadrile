@@ -12,7 +12,7 @@ pub trait VcfRecordInspector<R> {
 }
 
 pub fn get_vcf_reader(input: &str)
-                  -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
+                      -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
     Ok(
         VCFReader::new(
             BufReader::new(MultiGzDecoder::new(File::open(input)?))
@@ -92,10 +92,45 @@ impl<W: Write> MafWriter<W> {
     }
 }
 
+const KEY_GT: &[u8; 2] = b"GT";
+
 impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), Error> {
-        let format = &record.format;
-        todo!()
+        let alts: Vec<&Vec<u8>> = record.header().alt_list().collect();
+        let mut alt_counts = vec![0u64; alts.len()];
+        for sample in record.header().samples() {
+            if let Some(genotypes) = record.genotype(sample, KEY_GT) {
+                for genotype in genotypes {
+                    if genotype.len() == 1 {
+                        let alt = genotype[0];
+                        //  We're assuming there are no more than 10 alt alleles.
+                        if alt >= b'1' {
+                            let i_alt = alt - b'1';
+                            alt_counts[i_alt as usize] += 1;
+                        }
+                    }
+                }
+            }
+        }
+        for i in 0..alts.len() {
+            let alt = alts[i];
+            let alt_count = alt_counts[i];
+            let mut is_first = true;
+            for id in &record.id {
+                if is_first {
+                    is_first = false
+                } else {
+                    self.write.write(b", ")?;
+                }
+                self.write.write(&id)?;
+            }
+            self.write.write(b"\t")?;
+            self.write.write(alt)?;
+            self.write.write(b"\t")?;
+            self.write.write(alt_count.to_string().as_bytes())?;
+            self.write.write(b"\n")?;
+        }
+        Ok(())
     }
 
     fn get_result(&mut self) -> Result<(), Error> {

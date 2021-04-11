@@ -13,6 +13,8 @@ fn evaluate_args() -> Result<(), error::Error> {
                 commands::write_list_of_variants(sub_matches),
             config::SUB_COMMAND_NAME_LIST_SAMPLES =>
                 commands::write_list_of_samples(sub_matches),
+            config::SUB_COMMAND_NAME_MAF =>
+                commands::calculate_maf(sub_matches),
             &_ => {
                 let message =
                     format!("Unknown subcommand {}. Use '--help' to get list.", sub_name);
