@@ -4,6 +4,7 @@ use flate2::read::MultiGzDecoder;
 use std::io::{BufReader, Write};
 use std::io;
 use std::fs::File;
+use crate::error::Error;
 
 pub trait VcfRecordInspector<R> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error>;
@@ -55,7 +56,7 @@ pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
     }
 }
 
-pub(crate) struct VariantListWriter<W: Write> {
+pub struct VariantListWriter<W: Write> {
     write: W
 }
 
@@ -76,6 +77,28 @@ impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
     }
 
     fn get_result(&mut self) -> Result<(), error::Error> {
+        self.write.flush()?;
+        Ok(())
+    }
+}
+
+pub struct MafWriter<W: Write> {
+    write: W
+}
+
+impl<W: Write> MafWriter<W> {
+    pub fn new(write: W) -> MafWriter<W> {
+        MafWriter { write }
+    }
+}
+
+impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
+    fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), Error> {
+        let format = &record.format;
+        todo!()
+    }
+
+    fn get_result(&mut self) -> Result<(), Error> {
         self.write.flush()?;
         Ok(())
     }

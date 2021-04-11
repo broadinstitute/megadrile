@@ -29,3 +29,10 @@ pub fn write_list_of_samples(sub_matches: &ArgMatches) -> Result<(), error::Erro
     transform::write_sample_list_file(input, output)
 }
 
+pub fn calculate_maf(sub_matches: &ArgMatches) -> Result<(), error::Error> {
+    let input = get_str(sub_matches, "input")?;
+    let output = get_str(sub_matches, "output")?;
+    println!("Reading from {} and writing MAF to {}", input, output);
+    transform::write_sample_list_file(input, output)
+}
+
