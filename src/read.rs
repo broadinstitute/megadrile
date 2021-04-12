@@ -96,13 +96,16 @@ const KEY_GT: &[u8; 2] = b"GT";
 
 impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), Error> {
-        let alts: Vec<&Vec<u8>> = record.header().alt_list().collect();
+        // let alts: Vec<&Vec<u8>> = record.header().alt_list().collect();
+        let alts: &Vec<Vec<u8>> = &record.alternative;
         let mut alt_counts = vec![0u64; alts.len()];
         for sample in record.header().samples() {
             if let Some(genotypes) = record.genotype(sample, KEY_GT) {
                 for genotype in genotypes {
+                    println!("genotype == {}", String::from_utf8(genotype.clone()).unwrap());
                     if genotype.len() == 1 {
                         let alt = genotype[0];
+                        println!("alt = {}", alt);
                         //  We're assuming there are no more than 10 alt alleles.
                         if alt >= b'1' {
                             let i_alt = alt - b'1';
@@ -112,9 +115,12 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
                 }
             }
         }
+        println!("alts.len() = {}", alts.len());
         for i in 0..alts.len() {
-            let alt = alts[i];
+            let alt = &alts[i];
             let alt_count = alt_counts[i];
+            println!("alt = {}", String::from_utf8(alt.clone()).unwrap());
+            println!("alt_count = {}", alt_count);
             let mut is_first = true;
             for id in &record.id {
                 if is_first {
@@ -125,7 +131,7 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
                 self.write.write(&id)?;
             }
             self.write.write(b"\t")?;
-            self.write.write(alt)?;
+            self.write.write(&alt)?;
             self.write.write(b"\t")?;
             self.write.write(alt_count.to_string().as_bytes())?;
             self.write.write(b"\n")?;
