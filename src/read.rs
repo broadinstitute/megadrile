@@ -102,7 +102,7 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
         for sample in record.header().samples() {
             if let Some(genotypes) = record.genotype(sample, KEY_GT) {
                 for genotype in genotypes {
-                    println!("genotype == {}", String::from_utf8(genotype.clone()).unwrap());
+                    println!("genotype == {}", std::str::from_utf8(genotype).unwrap());
                     if genotype.len() == 1 {
                         let alt = genotype[0];
                         println!("alt = {}", alt);
@@ -119,7 +119,7 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
         for i in 0..alts.len() {
             let alt = &alts[i];
             let alt_count = alt_counts[i];
-            println!("alt = {}", String::from_utf8(alt.clone()).unwrap());
+            println!("alt = {}", std::str::from_utf8(alt).unwrap());
             println!("alt_count = {}", alt_count);
             let mut is_first = true;
             for id in &record.id {
