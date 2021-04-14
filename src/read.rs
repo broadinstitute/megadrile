@@ -98,13 +98,18 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), Error> {
         // let alts: Vec<&Vec<u8>> = record.header().alt_list().collect();
         let alts: &Vec<Vec<u8>> = &record.alternative;
+        println!("alts.len() == {}", alts.len());
         let mut alt_counts = vec![0u64; alts.len()];
         for sample in record.header().samples() {
             if let Some(genotypes) = record.genotype(sample, KEY_GT) {
-                for genotype in genotypes {
-                    println!("genotype == {}", std::str::from_utf8(genotype).unwrap());
-                    if genotype.len() == 1 {
-                        let alt = genotype[0];
+                for genotype_bytes in genotypes {
+                    let genotype = std::str::from_utf8(genotype_bytes)?;
+                    println!("genotype == {}", genotype);
+                    for allele in genotype.split(&['|', '/'][..]) {
+                        println!("allele == {}", allele);
+                    }
+                    if genotype_bytes.len() == 1 {
+                        let alt = genotype_bytes[0];
                         println!("alt = {}", alt);
                         //  We're assuming there are no more than 10 alt alleles.
                         if alt >= b'1' {
