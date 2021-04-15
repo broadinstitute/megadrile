@@ -1,6 +1,5 @@
 use std::{io, convert, string};
 use vcf::VCFError;
-use std::str::Utf8Error;
 
 pub enum Error {
     MDError(string::String),

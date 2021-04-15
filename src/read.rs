@@ -104,17 +104,11 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
             if let Some(genotypes) = record.genotype(sample, KEY_GT) {
                 for genotype_bytes in genotypes {
                     let genotype = std::str::from_utf8(genotype_bytes)?;
-                    println!("genotype == {}", genotype);
-                    for allele in genotype.split(&['|', '/'][..]) {
-                        println!("allele == {}", allele);
-                    }
-                    if genotype_bytes.len() == 1 {
-                        let alt = genotype_bytes[0];
-                        println!("alt = {}", alt);
-                        //  We're assuming there are no more than 10 alt alleles.
-                        if alt >= b'1' {
-                            let i_alt = alt - b'1';
-                            alt_counts[i_alt as usize] += 1;
+                    for i_allele_str in genotype.split(&['|', '/'][..]) {
+                        if let Ok(i_alt) = i_allele_str.parse::<usize>() {
+                            if i_alt > 0 {
+                                alt_counts[i_alt - 1] += 1;
+                            }
                         }
                     }
                 }
