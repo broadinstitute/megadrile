@@ -1,6 +1,6 @@
-use megadrile::{commands, config, error};
+use megadrile::{commands, config, error::Error};
 
-fn evaluate_args() -> Result<(), error::Error> {
+fn evaluate_args() -> megadrile::Result<()> {
     let arg_matches = config::get_cli_config();
     if let (sub_name, Some(sub_matches)) = arg_matches.subcommand() {
         match sub_name {
@@ -10,13 +10,11 @@ fn evaluate_args() -> Result<(), error::Error> {
             config::SUB_COMMAND_NAME_MAF => commands::calculate_maf(sub_matches),
             &_ => {
                 let message = format!("Unknown subcommand {}. Use '--help' to get list.", sub_name);
-                Err(error::Error::from(message))
+                Err(Error::from(message))
             }
         }
     } else {
-        Err(error::Error::from(
-            "Missing subcommand. Use '--help' to get list.",
-        ))
+        Err(Error::from("Missing subcommand. Use '--help' to get list."))
     }
 }
 
