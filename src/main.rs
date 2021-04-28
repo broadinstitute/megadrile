@@ -32,7 +32,7 @@ fn main() {
             println!("ok")
         }
         Err(error) => {
-            println!("Error: {}", error.message())
+            println!("Error: {}", error)
         }
     }
     println!("Done!");

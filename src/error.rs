@@ -1,4 +1,4 @@
-use std::io;
+use std::{fmt::Display, io};
 use vcf::VCFError;
 
 #[derive(Debug)]
@@ -33,13 +33,15 @@ impl From<std::str::Utf8Error> for Error {
     fn from(utf8_error: std::str::Utf8Error) -> Error { Error::Utf8(utf8_error) }
 }
 
-impl Error {
-    pub fn message(&self) -> String {
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::MDError(string) => { string.to_string() }
-            Error::Io(io_error) => { format!("{:?}", io_error) }
-            Error::Vcf(vcf_error) => { vcf_error.to_string() }
-            Error::Utf8(utf8_error) => { utf8_error.to_string() }
+            Error::MDError(e) => f.write_str(e),
+            Error::Io(e) => e.fmt(f),
+            Error::Vcf(e) => e.fmt(f),
+            Error::Utf8(e) => e.fmt(f),
         }
     }
 }
+
+impl std::error::Error for Error {}
