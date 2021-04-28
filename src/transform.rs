@@ -20,7 +20,7 @@ pub fn write_sample_list_file(input: &str, output: &str) -> Result<(), error::Er
     let mut out_writer = BufWriter::new(File::create(output)?);
     for sample in vcf_reader.header().samples().iter() {
         out_writer.write(sample.as_slice())?;
-        out_writer.write("\n".as_bytes())?;
+        out_writer.write(b"\n")?;
     }
     Ok(())
 }
