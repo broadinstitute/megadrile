@@ -1,50 +1,49 @@
-use vcf::{VCFRecord, VCFReader};
-use crate::error;
+use std::{
+    fs::File,
+    io::{self, BufReader, Write},
+};
+
 use flate2::read::MultiGzDecoder;
-use std::io::{BufReader, Write};
-use std::io;
-use std::fs::File;
+use vcf::{VCFReader, VCFRecord};
+
 use crate::error::Error;
 
 pub trait VcfRecordInspector<R> {
-    fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error>;
-    fn get_result(&mut self) -> Result<R, error::Error>;
+    fn inspect_record(&mut self, record: &VCFRecord) -> crate::Result<()>;
+    fn get_result(&mut self) -> crate::Result<R>;
 }
 
-pub fn get_vcf_reader(input: &str)
-                      -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
-    Ok(
-        VCFReader::new(
-            BufReader::new(MultiGzDecoder::new(File::open(input)?))
-        )?
-    )
+pub fn get_vcf_reader(input: &str) -> crate::Result<VCFReader<BufReader<MultiGzDecoder<File>>>> {
+    Ok(VCFReader::new(BufReader::new(MultiGzDecoder::new(
+        File::open(input)?,
+    )))?)
 }
 
 pub struct RecordCounter {
-    n_records: u32
+    n_records: u32,
 }
 
 impl RecordCounter {
     pub fn new() -> RecordCounter {
-        RecordCounter {
-            n_records: 0
-        }
+        RecordCounter { n_records: 0 }
     }
 }
 
 impl VcfRecordInspector<u32> for RecordCounter {
-    fn inspect_record(&mut self, _record: &VCFRecord) -> Result<(), error::Error> {
+    fn inspect_record(&mut self, _record: &VCFRecord) -> crate::Result<()> {
         self.n_records += 1;
         Ok(())
     }
 
-    fn get_result(&mut self) -> Result<u32, error::Error> {
+    fn get_result(&mut self) -> crate::Result<u32> {
         Ok(self.n_records)
     }
 }
 
-pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
-(reader: &mut VCFReader<B>, inspector: &mut I) -> Result<R, error::Error> {
+pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>(
+    reader: &mut VCFReader<B>,
+    inspector: &mut I,
+) -> crate::Result<R> {
     let mut record = reader.empty_record();
     loop {
         let has_record = reader.next_record(&mut record)?;
@@ -57,7 +56,7 @@ pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
 }
 
 pub struct VariantListWriter<W: Write> {
-    write: W
+    write: W,
 }
 
 impl<W: Write> VariantListWriter<W> {
@@ -67,23 +66,22 @@ impl<W: Write> VariantListWriter<W> {
 }
 
 impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
-    fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error> {
-        for id in record.id.iter() {
-            let id_bytes: &[u8] = id;
-            self.write.write(id_bytes)?;
-            self.write.write("\n".as_bytes())?;
+    fn inspect_record(&mut self, record: &VCFRecord) -> crate::Result<()> {
+        for id in &record.id {
+            self.write.write(id)?;
+            self.write.write(b"\n")?;
         }
         Ok(())
     }
 
-    fn get_result(&mut self) -> Result<(), error::Error> {
+    fn get_result(&mut self) -> crate::Result<()> {
         self.write.flush()?;
         Ok(())
     }
 }
 
 pub struct MafWriter<W: Write> {
-    write: W
+    write: W,
 }
 
 impl<W: Write> MafWriter<W> {
@@ -96,15 +94,17 @@ const KEY_GT: &[u8; 2] = b"GT";
 
 impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), Error> {
+        static GENOTYPE_SPLIT_CHARACTERS: &[char] = &['|', '/'];
+
         // let alts: Vec<&Vec<u8>> = record.header().alt_list().collect();
-        let alts: &Vec<Vec<u8>> = &record.alternative;
+        let alts = &record.alternative;
         println!("alts.len() == {}", alts.len());
         let mut alt_counts = vec![0u64; alts.len()];
         for sample in record.header().samples() {
             if let Some(genotypes) = record.genotype(sample, KEY_GT) {
                 for genotype_bytes in genotypes {
                     let genotype = std::str::from_utf8(genotype_bytes)?;
-                    for i_allele_str in genotype.split(&['|', '/'][..]) {
+                    for i_allele_str in genotype.split(GENOTYPE_SPLIT_CHARACTERS) {
                         if let Ok(i_alt) = i_allele_str.parse::<usize>() {
                             if i_alt > 0 {
                                 alt_counts[i_alt - 1] += 1;
@@ -138,7 +138,7 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
         Ok(())
     }
 
-    fn get_result(&mut self) -> Result<(), Error> {
+    fn get_result(&mut self) -> crate::Result<()> {
         self.write.flush()?;
         Ok(())
     }
