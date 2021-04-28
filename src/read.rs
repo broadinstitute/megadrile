@@ -98,7 +98,7 @@ const KEY_GT: &[u8; 2] = b"GT";
 impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), Error> {
         // let alts: Vec<&Vec<u8>> = record.header().alt_list().collect();
-        let alts: &Vec<Vec<u8>> = &record.alternative;
+        let alts = &record.alternative;
         println!("alts.len() == {}", alts.len());
         let mut alt_counts = vec![0u64; alts.len()];
         for sample in record.header().samples() {
