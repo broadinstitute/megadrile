@@ -97,6 +97,8 @@ const KEY_GT: &[u8; 2] = b"GT";
 
 impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), Error> {
+        static GENOTYPE_SPLIT_CHARACTERS: &[char] = &['|', '/'];
+
         // let alts: Vec<&Vec<u8>> = record.header().alt_list().collect();
         let alts = &record.alternative;
         println!("alts.len() == {}", alts.len());
@@ -105,7 +107,7 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
             if let Some(genotypes) = record.genotype(sample, KEY_GT) {
                 for genotype_bytes in genotypes {
                     let genotype = std::str::from_utf8(genotype_bytes)?;
-                    for i_allele_str in genotype.split(&['|', '/'][..]) {
+                    for i_allele_str in genotype.split(GENOTYPE_SPLIT_CHARACTERS) {
                         if let Ok(i_alt) = i_allele_str.parse::<usize>() {
                             if i_alt > 0 {
                                 alt_counts[i_alt - 1] += 1;
