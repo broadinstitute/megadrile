@@ -6,16 +6,14 @@ use std::{
 use flate2::read::MultiGzDecoder;
 use vcf::{VCFReader, VCFRecord};
 
-use crate::error::{self, Error};
+use crate::error::Error;
 
 pub trait VcfRecordInspector<R> {
-    fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error>;
-    fn get_result(&mut self) -> Result<R, error::Error>;
+    fn inspect_record(&mut self, record: &VCFRecord) -> crate::Result<()>;
+    fn get_result(&mut self) -> crate::Result<R>;
 }
 
-pub fn get_vcf_reader(
-    input: &str,
-) -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
+pub fn get_vcf_reader(input: &str) -> crate::Result<VCFReader<BufReader<MultiGzDecoder<File>>>> {
     Ok(VCFReader::new(BufReader::new(MultiGzDecoder::new(
         File::open(input)?,
     )))?)
@@ -32,12 +30,12 @@ impl RecordCounter {
 }
 
 impl VcfRecordInspector<u32> for RecordCounter {
-    fn inspect_record(&mut self, _record: &VCFRecord) -> Result<(), error::Error> {
+    fn inspect_record(&mut self, _record: &VCFRecord) -> crate::Result<()> {
         self.n_records += 1;
         Ok(())
     }
 
-    fn get_result(&mut self) -> Result<u32, error::Error> {
+    fn get_result(&mut self) -> crate::Result<u32> {
         Ok(self.n_records)
     }
 }
@@ -45,7 +43,7 @@ impl VcfRecordInspector<u32> for RecordCounter {
 pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>(
     reader: &mut VCFReader<B>,
     inspector: &mut I,
-) -> Result<R, error::Error> {
+) -> crate::Result<R> {
     let mut record = reader.empty_record();
     loop {
         let has_record = reader.next_record(&mut record)?;
@@ -68,7 +66,7 @@ impl<W: Write> VariantListWriter<W> {
 }
 
 impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
-    fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error> {
+    fn inspect_record(&mut self, record: &VCFRecord) -> crate::Result<()> {
         for id in &record.id {
             self.write.write(id)?;
             self.write.write(b"\n")?;
@@ -76,7 +74,7 @@ impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
         Ok(())
     }
 
-    fn get_result(&mut self) -> Result<(), error::Error> {
+    fn get_result(&mut self) -> crate::Result<()> {
         self.write.flush()?;
         Ok(())
     }
@@ -140,7 +138,7 @@ impl<W: Write> VcfRecordInspector<()> for MafWriter<W> {
         Ok(())
     }
 
-    fn get_result(&mut self) -> Result<(), Error> {
+    fn get_result(&mut self) -> crate::Result<()> {
         self.write.flush()?;
         Ok(())
     }
