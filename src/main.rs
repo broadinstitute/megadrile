@@ -19,13 +19,9 @@ fn evaluate_args() -> megadrile::Result<()> {
 }
 
 fn main() {
-    match evaluate_args() {
-        Ok(_) => {
-            println!("ok")
-        }
-        Err(error) => {
-            println!("Error: {}", error)
-        }
+    if let Err(e) = evaluate_args() {
+        eprintln!("Error: {}", e)
+    } else {
+        println!("Done!");
     }
-    println!("Done!");
 }
