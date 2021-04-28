@@ -1,7 +1,6 @@
-use crate::read::{RecordCounter, MafWriter};
-use crate::{read, error};
-use std::fs::File;
-use std::io::BufWriter;
+use std::{fs::File, io::BufWriter};
+
+use crate::{error, read::{self, RecordCounter, MafWriter}};
 
 pub struct Counts {
     pub n_samples: u32,

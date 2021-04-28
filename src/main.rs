@@ -1,7 +1,4 @@
-extern crate clap;
-
-use megadrile::{error, commands};
-use megadrile::config;
+use megadrile::{config, error, commands};
 
 fn evaluate_args() -> Result<(), error::Error> {
     let arg_matches = config::get_cli_config();

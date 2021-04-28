@@ -1,6 +1,6 @@
 use clap::ArgMatches;
-use crate::{error, transform};
-use crate::stats;
+
+use crate::{error, stats, transform};
 
 fn get_str<'a>(arg_matches: &'a ArgMatches, name: &str) -> Result<&'a str, error::Error> {
     arg_matches.value_of(name)

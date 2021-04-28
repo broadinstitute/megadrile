@@ -1,10 +1,9 @@
-use vcf::{VCFRecord, VCFReader};
-use crate::error;
+use std::{fs::File, io::{self, BufReader,Write}};
+
 use flate2::read::MultiGzDecoder;
-use std::io::{BufReader, Write};
-use std::io;
-use std::fs::File;
-use crate::error::Error;
+use vcf::{VCFRecord, VCFReader};
+
+use crate::error::{self, Error};
 
 pub trait VcfRecordInspector<R> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error>;

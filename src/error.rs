@@ -1,4 +1,5 @@
 use std::{fmt::Display, io};
+
 use vcf::VCFError;
 
 #[derive(Debug)]

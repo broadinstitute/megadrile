@@ -1,7 +1,6 @@
-use crate::{error, read};
-use std::io::{BufWriter, Write};
-use std::fs::File;
-use crate::read::VariantListWriter;
+use std::{fs::File, io::{BufWriter, Write}};
+
+use crate::{error, read::{self, VariantListWriter}};
 
 pub fn write_variant_list_file(input: &str, output: &str) -> Result<(), error::Error> {
     let mut vcf_reader = read::get_vcf_reader(input)?;
