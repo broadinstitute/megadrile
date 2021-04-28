@@ -69,9 +69,8 @@ impl<W: Write> VariantListWriter<W> {
 
 impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
     fn inspect_record(&mut self, record: &VCFRecord) -> Result<(), error::Error> {
-        for id in record.id.iter() {
-            let id_bytes: &[u8] = id;
-            self.write.write(id_bytes)?;
+        for id in &record.id {
+            self.write.write(id)?;
             self.write.write("\n".as_bytes())?;
         }
         Ok(())
