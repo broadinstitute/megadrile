@@ -1,6 +1,7 @@
 use std::{io, convert, string};
 use vcf::VCFError;
 
+#[derive(Debug)]
 pub enum Error {
     MDError(string::String),
     Io(io::Error),
