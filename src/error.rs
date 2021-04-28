@@ -7,7 +7,7 @@ pub enum Error {
     MDError(String),
     Io(io::Error),
     Vcf(VCFError),
-    Utf8(std::str::Utf8Error)
+    Utf8(std::str::Utf8Error),
 }
 
 impl From<vcf::VCFError> for Error {
@@ -23,15 +23,21 @@ impl From<io::Error> for Error {
 }
 
 impl From<&str> for Error {
-    fn from(message: &str) -> Error { Error::MDError(String::from(message)) }
+    fn from(message: &str) -> Error {
+        Error::MDError(String::from(message))
+    }
 }
 
 impl From<String> for Error {
-    fn from(message: String) -> Error { Error::MDError(message) }
+    fn from(message: String) -> Error {
+        Error::MDError(message)
+    }
 }
 
 impl From<std::str::Utf8Error> for Error {
-    fn from(utf8_error: std::str::Utf8Error) -> Error { Error::Utf8(utf8_error) }
+    fn from(utf8_error: std::str::Utf8Error) -> Error {
+        Error::Utf8(utf8_error)
+    }
 }
 
 impl Display for Error {

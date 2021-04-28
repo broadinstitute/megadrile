@@ -3,7 +3,8 @@ use clap::ArgMatches;
 use crate::{error, stats, transform};
 
 fn get_str<'a>(arg_matches: &'a ArgMatches, name: &str) -> Result<&'a str, error::Error> {
-    arg_matches.value_of(name)
+    arg_matches
+        .value_of(name)
         .ok_or(error::Error::MDError(format!("Missing argument {}.", name)))
 }
 
@@ -35,4 +36,3 @@ pub fn calculate_maf(sub_matches: &ArgMatches) -> Result<(), error::Error> {
     println!("Reading from {} and writing MAF to {}", input, output);
     stats::write_maf(input, output)
 }
-

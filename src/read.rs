@@ -1,7 +1,10 @@
-use std::{fs::File, io::{self, BufReader,Write}};
+use std::{
+    fs::File,
+    io::{self, BufReader, Write},
+};
 
 use flate2::read::MultiGzDecoder;
-use vcf::{VCFRecord, VCFReader};
+use vcf::{VCFReader, VCFRecord};
 
 use crate::error::{self, Error};
 
@@ -10,24 +13,21 @@ pub trait VcfRecordInspector<R> {
     fn get_result(&mut self) -> Result<R, error::Error>;
 }
 
-pub fn get_vcf_reader(input: &str)
-                      -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
-    Ok(
-        VCFReader::new(
-            BufReader::new(MultiGzDecoder::new(File::open(input)?))
-        )?
-    )
+pub fn get_vcf_reader(
+    input: &str,
+) -> Result<VCFReader<BufReader<MultiGzDecoder<File>>>, error::Error> {
+    Ok(VCFReader::new(BufReader::new(MultiGzDecoder::new(
+        File::open(input)?,
+    )))?)
 }
 
 pub struct RecordCounter {
-    n_records: u32
+    n_records: u32,
 }
 
 impl RecordCounter {
     pub fn new() -> RecordCounter {
-        RecordCounter {
-            n_records: 0
-        }
+        RecordCounter { n_records: 0 }
     }
 }
 
@@ -42,8 +42,10 @@ impl VcfRecordInspector<u32> for RecordCounter {
     }
 }
 
-pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
-(reader: &mut VCFReader<B>, inspector: &mut I) -> Result<R, error::Error> {
+pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>(
+    reader: &mut VCFReader<B>,
+    inspector: &mut I,
+) -> Result<R, error::Error> {
     let mut record = reader.empty_record();
     loop {
         let has_record = reader.next_record(&mut record)?;
@@ -56,7 +58,7 @@ pub fn apply_record_inspector<B: io::BufRead, R, I: VcfRecordInspector<R>>
 }
 
 pub struct VariantListWriter<W: Write> {
-    write: W
+    write: W,
 }
 
 impl<W: Write> VariantListWriter<W> {
@@ -82,7 +84,7 @@ impl<W: Write> VcfRecordInspector<()> for VariantListWriter<W> {
 }
 
 pub struct MafWriter<W: Write> {
-    write: W
+    write: W,
 }
 
 impl<W: Write> MafWriter<W> {
